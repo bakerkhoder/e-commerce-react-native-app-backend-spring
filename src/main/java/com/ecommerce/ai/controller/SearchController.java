@@ -1,7 +1,7 @@
 package com.ecommerce.ai.controller;
 
 import com.ecommerce.ai.service.SearchService;
-import org.springframework.ai.document.Document;
+import com.ecommerce.catalog.dto.ProductResponse;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class SearchController {
     }
 
     @GetMapping
-    public List<Document> search(@RequestParam String q) {
-        return searchService.search(q, 5);
+    public List<ProductResponse> search(@RequestParam String q) {
+        return searchService.searchProducts(q, 10).stream().map(ProductResponse::from).toList();
     }
 }

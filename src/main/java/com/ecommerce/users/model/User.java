@@ -14,21 +14,14 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String passwordHash; // never store plain text — see PasswordEncoder below
+    private String passwordHash; // never store plain text
 
     @Column(nullable = false)
     private String fullName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.CUSTOMER;
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
 
     public User() {
     }
@@ -63,5 +56,13 @@ public class User {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

@@ -40,4 +40,9 @@ public class ProductController {
     public ProductResponse create(@RequestBody ProductRequest request) {
         return ProductResponse.from(service.create(request));
     }
+
+    @PostMapping("/reindex")
+    public java.util.Map<String, Integer> reindex() {
+        return java.util.Map.of("indexed", service.reindexAll());
+    }
 }

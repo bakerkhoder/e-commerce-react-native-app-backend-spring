@@ -1,6 +1,6 @@
 package com.ecommerce.ai.service;
 
-import org.springframework.ai.document.Document;
+import com.ecommerce.catalog.model.Product;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,16 +15,18 @@ public class ShoppingAssistantService {
     }
 
     public String ask(String question) {
-        List<Document> relevant = searchService.search(question, 4);
+        List<Product> matches = searchService.searchProducts(question, 5);
 
-        if (relevant.isEmpty()) {
+        if (matches.isEmpty()) {
             return "I couldn't find anything matching that in our current catalog.";
         }
 
-        String productList = relevant.stream()
-            .map(doc -> "- " + doc.getMetadata().get("name") + " ($" + doc.getMetadata().get("price") + ")")
+        String list = matches.stream()
+            .map(p -> "- " + p.getName()
+                + " ($" + p.getPrice().toPlainString() + (p.getUnit() != null ? " / " + p.getUnit() : "") + ", "
+                + (p.getStockQuantity() != null && p.getStockQuantity() > 0 ? "in stock" : "out of stock") + ")")
             .collect(Collectors.joining("\n"));
 
-        return "Here's what I found that might match:\n" + productList;
+        return "Here's what I found that might match:\n" + list;
     }
 }
