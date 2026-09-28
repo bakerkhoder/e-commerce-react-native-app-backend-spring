@@ -7,6 +7,7 @@ import com.ecommerce.catalog.model.Category;
 import com.ecommerce.catalog.model.Product;
 import com.ecommerce.catalog.repository.CategoryRepository;
 import com.ecommerce.catalog.repository.ProductRepository;
+import com.ecommerce.common.NotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.data.domain.PageRequest;
+
 @Service
 public class ProductService {
 
@@ -39,7 +40,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Product getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
     }
 
     /**
@@ -104,7 +105,7 @@ public class ProductService {
 
     private void apply(Product product, ProductRequest req) {
         Category category = categoryRepository.findById(req.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + req.categoryId()));
+                .orElseThrow(() -> new NotFoundException("Category not found: " + req.categoryId()));
         product.setName(req.name());
         product.setDescription(req.description());
         product.setPrice(req.price());

@@ -10,7 +10,8 @@ import com.ecommerce.orders.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
-
+import com.ecommerce.common.NotFoundException;
+import java.util.List;
 @Service
 public class OrderService {
 
@@ -61,5 +62,18 @@ public class OrderService {
         cartService.clearCart(userId); // we need to add this method to CartService
 
         return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> getOrdersForUser(Long userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public Order getOrderForUser(Long userId, Long orderId) {
+        // Lookup includes the user id: someone else's order is indistinguishable from a
+        // missing one
+        return orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
     }
 }
