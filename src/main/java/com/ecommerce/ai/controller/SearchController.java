@@ -16,7 +16,7 @@ public class SearchController {
     }
 
     @GetMapping
-    public List<ProductResponse> search(@RequestParam String q) {
-        return searchService.searchProducts(q, 10).stream().map(ProductResponse::from).toList();
+    public List<ProductResponse> search(@RequestParam String q, @RequestParam(required = false) Long categoryId) {
+        return searchService.searchProducts(q, 10, categoryId).stream().map(ProductResponse::from).toList();
     }
 }

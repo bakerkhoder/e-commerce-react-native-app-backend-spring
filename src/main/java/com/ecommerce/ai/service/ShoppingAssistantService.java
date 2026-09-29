@@ -15,7 +15,7 @@ public class ShoppingAssistantService {
     }
 
     public String ask(String question) {
-        List<Product> matches = searchService.searchProducts(question, 5);
+        List<Product> matches = searchService.searchProducts(question, 5,null);
 
         if (matches.isEmpty()) {
             return "I couldn't find anything matching that in our current catalog.";

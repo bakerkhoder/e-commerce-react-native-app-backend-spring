@@ -33,8 +33,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<Product> getAll() {
-        return repository.findAll();
+    public List<Product> getAll(Long categoryId) {
+        return categoryId == null ? repository.findAll() : repository.findByCategoryId(categoryId);
     }
 
     @Transactional(readOnly = true)

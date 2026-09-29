@@ -17,8 +17,8 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponse> getAll() {
-        return service.getAll().stream().map(ProductResponse::from).toList();
+    public List<ProductResponse> getAll(@RequestParam(required = false) Long categoryId) {
+        return service.getAll(categoryId).stream().map(ProductResponse::from).toList();
     }
 
     @GetMapping("/{id}")

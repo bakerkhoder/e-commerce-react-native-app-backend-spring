@@ -24,4 +24,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
           p.name
         """)
     List<Product> searchByKeyword(@Param("term") String term, Pageable pageable);
+    List<Product> findByCategoryId(Long categoryId);
+    
 }

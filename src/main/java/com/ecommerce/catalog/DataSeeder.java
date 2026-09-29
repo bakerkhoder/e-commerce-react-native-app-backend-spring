@@ -52,7 +52,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedCatalog() {
-        if (!productService.getAll().isEmpty())
+        if (!productService.getAll(null).isEmpty())
             return;
 
         Category vegetables = categoryRepo.save(new Category("Vegetables", "grocery"));
