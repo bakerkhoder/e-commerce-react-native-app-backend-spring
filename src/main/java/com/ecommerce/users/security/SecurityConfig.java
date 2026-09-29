@@ -37,8 +37,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                         .requestMatchers("/api/search/**", "/api/assistant/**").permitAll()
-                        .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN") // POST/PUT/DELETE
-                                                                                                    // need admin
+                        .requestMatchers("/images/**").permitAll() // product photos must be publicly viewable, same as
+                                                                   // browsing
+                        .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

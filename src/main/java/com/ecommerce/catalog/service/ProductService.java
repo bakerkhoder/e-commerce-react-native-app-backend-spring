@@ -5,8 +5,10 @@ import com.ecommerce.catalog.event.ProductDeletedEvent;
 import com.ecommerce.catalog.event.ProductSavedEvent;
 import com.ecommerce.catalog.model.Category;
 import com.ecommerce.catalog.model.Product;
+import com.ecommerce.catalog.model.ProductImage;
 import com.ecommerce.catalog.repository.CategoryRepository;
 import com.ecommerce.catalog.repository.ProductRepository;
+import com.ecommerce.catalog.repository.ProductImageRepository;
 import com.ecommerce.common.NotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -24,12 +26,18 @@ public class ProductService {
     private final ProductRepository repository;
     private final CategoryRepository categoryRepository;
     private final ApplicationEventPublisher events;
+    private final ProductImageService imageService;
+    private final ProductImageRepository imageRepository;
 
+    // add to constructor
     public ProductService(ProductRepository repository, CategoryRepository categoryRepository,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events, ProductImageService imageService,
+            ProductImageRepository imageRepository) {
         this.repository = repository;
         this.categoryRepository = categoryRepository;
         this.events = events;
+        this.imageService = imageService;
+        this.imageRepository = imageRepository;
     }
 
     @Transactional(readOnly = true)
@@ -115,16 +123,50 @@ public class ProductService {
         product.setAttributes(req.attributes());
     }
 
-    private ProductSavedEvent toSavedEvent(Product p) {
-        return new ProductSavedEvent(
-                p.getId(), p.getName(), p.getDescription(),
-                p.getPrice().toPlainString(),
-                p.getCategory() != null ? p.getCategory().getName() : "",
-                p.getAttributes());
-    }
+  private ProductSavedEvent toSavedEvent(Product p) {
+    String thumb = p.getImages().isEmpty() ? null : p.getImages().get(0).getThumbnailUrl();
+    return new ProductSavedEvent(
+        p.getId(), p.getName(), p.getDescription(), p.getPrice().toPlainString(),
+        p.getCategory() != null ? p.getCategory().getName() : "", p.getAttributes(), thumb
+    );
+}
 
     @Transactional(readOnly = true)
     public List<Product> searchByKeyword(String term, int limit) {
         return repository.searchByKeyword(term, PageRequest.of(0, limit));
     }
+
+    @Transactional
+    public Product addImage(Long productId, org.springframework.web.multipart.MultipartFile file) {
+        Product product = getById(productId);
+        ProductImageService.ImagePaths paths = imageService.store(productId, file);
+
+        ProductImage image = new ProductImage();
+        image.setProduct(product);
+        image.setImageUrl(paths.imageUrl());
+        image.setThumbnailUrl(paths.thumbnailUrl());
+        image.setSortOrder(product.getImages().size()); // append to the end of the gallery
+        product.getImages().add(image);
+
+        Product saved = repository.save(product);
+        events.publishEvent(toSavedEvent(saved)); // keeps search's thumbnail metadata current
+        return saved;
+    }
+
+    @Transactional
+    public Product removeImage(Long productId, Long imageId) {
+        Product product = getById(productId);
+        ProductImage toRemove = product.getImages().stream()
+                .filter(img -> img.getId().equals(imageId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Image not found on this product"));
+
+        imageService.deleteFiles(toRemove.getImageUrl(), toRemove.getThumbnailUrl());
+        product.getImages().remove(toRemove); // orphanRemoval deletes the row on save
+
+        Product saved = repository.save(product);
+        events.publishEvent(toSavedEvent(saved));
+        return saved;
+    }
+
 }

@@ -39,7 +39,8 @@ public class ProductIndexService {
         Document doc = new Document(
                 documentId(p.id()),
                 content.toString(),
-                Map.of("productId", p.id(), "name", p.name(), "price", p.price()));
+                Map.of("productId", p.id(), "name", p.name(), "price", p.price(), "thumbnailUrl",
+                        java.util.Objects.toString(p.thumbnailUrl(), "")));
         vectorStore.add(List.of(doc));
     }
 

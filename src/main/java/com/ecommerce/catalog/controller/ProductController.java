@@ -45,4 +45,15 @@ public class ProductController {
     public java.util.Map<String, Integer> reindex() {
         return java.util.Map.of("indexed", service.reindexAll());
     }
+
+    @PostMapping(value = "/{id}/images", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductResponse addImage(@PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ProductResponse.from(service.addImage(id, file));
+    }
+
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ProductResponse removeImage(@PathVariable Long id, @PathVariable Long imageId) {
+        return ProductResponse.from(service.removeImage(id, imageId));
+    }
 }
