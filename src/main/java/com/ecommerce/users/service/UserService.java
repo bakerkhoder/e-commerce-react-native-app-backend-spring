@@ -1,8 +1,15 @@
 package com.ecommerce.users.service;
 
 import com.ecommerce.common.NotFoundException;
+import com.ecommerce.users.model.ApplicationStatus;
+import com.ecommerce.users.model.Role;
+import com.ecommerce.users.model.SellerApplication;
 import com.ecommerce.users.model.User;
+import com.ecommerce.users.repository.SellerApplicationRepository;
 import com.ecommerce.users.repository.UserRepository;
+
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,10 +19,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SellerApplicationRepository applicationRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+            SellerApplicationRepository applicationRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.applicationRepository = applicationRepository;
+
     }
 
     @Transactional(readOnly = true)
@@ -38,5 +49,39 @@ public class UserService {
         }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public SellerApplication applyToBeSeller(Long userId, String businessName) {
+        User user = getById(userId);
+        if (user.getRole() != Role.CUSTOMER) {
+            throw new IllegalStateException("Only customer accounts can apply to become a seller");
+        }
+        if (applicationRepository.findByUserIdAndStatus(userId, ApplicationStatus.PENDING).isPresent()) {
+            throw new IllegalStateException("You already have a pending seller application");
+        }
+        SellerApplication application = new SellerApplication();
+        application.setUserId(userId);
+        application.setBusinessName(businessName);
+        return applicationRepository.save(application);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SellerApplication> getPendingApplications() {
+        return applicationRepository.findByStatus(ApplicationStatus.PENDING);
+    }
+
+    @Transactional
+    public void decideApplication(Long applicationId, boolean approve) {
+        SellerApplication application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("Application not found"));
+        application.setStatus(approve ? ApplicationStatus.APPROVED : ApplicationStatus.REJECTED);
+        applicationRepository.save(application);
+
+        if (approve) {
+            User user = getById(application.getUserId());
+            user.setRole(Role.SELLER);
+            userRepository.save(user);
+        }
     }
 }

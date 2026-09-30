@@ -1,5 +1,6 @@
 package com.ecommerce.catalog.service;
 
+import com.ecommerce.catalog.config.MarketplaceProperties;
 import com.ecommerce.catalog.dto.ProductRequest;
 import com.ecommerce.catalog.event.ProductDeletedEvent;
 import com.ecommerce.catalog.event.ProductSavedEvent;
@@ -19,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.ecommerce.catalog.model.ProductStatus;
 
 @Service
 public class ProductService {
@@ -28,21 +30,48 @@ public class ProductService {
     private final ApplicationEventPublisher events;
     private final ProductImageService imageService;
     private final ProductImageRepository imageRepository;
+    private final MarketplaceProperties marketplaceProperties;
 
     // add to constructor
     public ProductService(ProductRepository repository, CategoryRepository categoryRepository,
             ApplicationEventPublisher events, ProductImageService imageService,
-            ProductImageRepository imageRepository) {
+            ProductImageRepository imageRepository, MarketplaceProperties marketplaceProperties) {
         this.repository = repository;
         this.categoryRepository = categoryRepository;
         this.events = events;
         this.imageService = imageService;
         this.imageRepository = imageRepository;
+        this.marketplaceProperties = marketplaceProperties;
     }
 
     @Transactional(readOnly = true)
     public List<Product> getAll(Long categoryId) {
-        return categoryId == null ? repository.findAll() : repository.findByCategoryId(categoryId);
+        // Public browsing only ever sees approved products — this is what keeps a
+        // pending
+        // or rejected seller listing invisible to customers until an admin acts on it
+        List<Product> all = categoryId == null ? repository.findAll() : repository.findByCategoryId(categoryId);
+        return all.stream().filter(p -> p.getStatus() == ProductStatus.APPROVED).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> getMyProducts(Long sellerId) {
+        return repository.findBySellerId(sellerId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> getPendingApprovals() {
+        return repository.findByStatus(ProductStatus.PENDING);
+    }
+
+    @Transactional
+    public Product setApprovalStatus(Long productId, ProductStatus status) {
+        Product product = getById(productId);
+        product.setStatus(status);
+        Product saved = repository.save(product);
+        if (status == ProductStatus.APPROVED) {
+            events.publishEvent(toSavedEvent(saved)); // becomes searchable the moment it's approved
+        }
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -68,25 +97,53 @@ public class ProductService {
     }
 
     @Transactional
-    public Product create(ProductRequest req) {
+    public Product create(ProductRequest req, Long sellerId, boolean isAdmin) {
+        if (marketplaceProperties.isEnabled() && !isAdmin && sellerId == null) {
+            throw new IllegalStateException("Only sellers or admins can create products");
+        }
+
         Product product = new Product();
         apply(product, req);
+
+        if (marketplaceProperties.isEnabled()) {
+            product.setSellerId(isAdmin ? null : sellerId); // admin-created products stay platform-owned
+            product.setStatus(isAdmin ? ProductStatus.APPROVED : ProductStatus.PENDING); // sellers need approval
+        } else {
+            product.setSellerId(null);
+            product.setStatus(ProductStatus.APPROVED); // marketplace off: everything auto-approves, today's behavior
+        }
+
         Product saved = repository.save(product);
-        events.publishEvent(toSavedEvent(saved));
+        if (saved.getStatus() == ProductStatus.APPROVED) {
+            events.publishEvent(toSavedEvent(saved)); // only searchable once approved
+        }
         return saved;
     }
 
     @Transactional
-    public Product update(Long id, ProductRequest req) {
+    // add a parameter to both: Long requestingUserId, boolean isAdmin
+    public Product update(Long id, ProductRequest req, Long requestingUserId, boolean isAdmin) {
         Product product = getById(id);
+        if (!isAdmin && !java.util.Objects.equals(product.getSellerId(), requestingUserId)) {
+            throw new IllegalStateException("You can only edit your own products");
+        }
         apply(product, req);
         Product saved = repository.save(product);
-        events.publishEvent(toSavedEvent(saved));
+        if (saved.getStatus() == ProductStatus.APPROVED)
+            events.publishEvent(toSavedEvent(saved));
         return saved;
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long id, Long requestingUserId, boolean isAdmin) {
+        Product product = getById(id);
+        if (!isAdmin && !java.util.Objects.equals(product.getSellerId(), requestingUserId)) {
+            throw new IllegalStateException("You can only delete your own products");
+        }
+        imageService.deleteFiles(
+                product.getImages().stream()
+                        .flatMap(img -> java.util.stream.Stream.of(img.getImageUrl(), img.getThumbnailUrl()))
+                        .toArray(String[]::new));
         repository.deleteById(id);
         events.publishEvent(new ProductDeletedEvent(id));
     }
@@ -123,13 +180,12 @@ public class ProductService {
         product.setAttributes(req.attributes());
     }
 
-  private ProductSavedEvent toSavedEvent(Product p) {
-    String thumb = p.getImages().isEmpty() ? null : p.getImages().get(0).getThumbnailUrl();
-    return new ProductSavedEvent(
-        p.getId(), p.getName(), p.getDescription(), p.getPrice().toPlainString(),
-        p.getCategory() != null ? p.getCategory().getName() : "", p.getAttributes(), thumb
-    );
-}
+    private ProductSavedEvent toSavedEvent(Product p) {
+        String thumb = p.getImages().isEmpty() ? null : p.getImages().get(0).getThumbnailUrl();
+        return new ProductSavedEvent(
+                p.getId(), p.getName(), p.getDescription(), p.getPrice().toPlainString(),
+                p.getCategory() != null ? p.getCategory().getName() : "", p.getAttributes(), thumb);
+    }
 
     @Transactional(readOnly = true)
     public List<Product> searchByKeyword(String term, int limit) {

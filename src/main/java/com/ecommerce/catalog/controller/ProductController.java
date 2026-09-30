@@ -3,6 +3,8 @@ package com.ecommerce.catalog.controller;
 import com.ecommerce.catalog.dto.ProductRequest;
 import com.ecommerce.catalog.dto.ProductResponse;
 import com.ecommerce.catalog.service.ProductService;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -27,18 +29,47 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ProductResponse update(@PathVariable Long id, @RequestBody ProductRequest request) {
-        return ProductResponse.from(service.update(id, request));
+    public ProductResponse update(@PathVariable Long id, @RequestBody ProductRequest request,
+            @AuthenticationPrincipal Long userId,
+            org.springframework.security.core.Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ProductResponse.from(service.update(id, request, userId, isAdmin));
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public void delete(@PathVariable Long id,
+            @AuthenticationPrincipal Long userId,
+            org.springframework.security.core.Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        service.delete(id, userId, isAdmin);
     }
 
     @PostMapping
-    public ProductResponse create(@RequestBody ProductRequest request) {
-        return ProductResponse.from(service.create(request));
+    public ProductResponse create(@RequestBody ProductRequest request,
+            @AuthenticationPrincipal Long userId,
+            org.springframework.security.core.Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ProductResponse.from(service.create(request, isAdmin ? null : userId, isAdmin));
+    }
+
+    @GetMapping("/mine")
+    public List<ProductResponse> myProducts(@AuthenticationPrincipal Long userId) {
+        return service.getMyProducts(userId).stream().map(ProductResponse::from).toList();
+    }
+
+    @GetMapping("/pending")
+    public List<ProductResponse> pending() {
+        return service.getPendingApprovals().stream().map(ProductResponse::from).toList();
+    }
+
+    @PutMapping("/{id}/approve")
+    public ProductResponse approve(@PathVariable Long id) {
+        return ProductResponse.from(service.setApprovalStatus(id, com.ecommerce.catalog.model.ProductStatus.APPROVED));
+    }
+
+    @PutMapping("/{id}/reject")
+    public ProductResponse reject(@PathVariable Long id) {
+        return ProductResponse.from(service.setApprovalStatus(id, com.ecommerce.catalog.model.ProductStatus.REJECTED));
     }
 
     @PostMapping("/reindex")

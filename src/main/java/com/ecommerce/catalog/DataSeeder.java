@@ -35,6 +35,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         seedAdmin();
+        seedSeller();
         seedCatalog();
     }
 
@@ -51,6 +52,18 @@ public class DataSeeder implements CommandLineRunner {
         System.out.println("Seeded admin user: admin@test.com / admin1234");
     }
 
+    private void seedSeller() {
+        if (userRepo.findByEmail("seller@test.com").isPresent())
+            return;
+        User seller = new User();
+        seller.setEmail("seller@test.com");
+        seller.setPasswordHash(passwordEncoder.encode("seller1234"));
+        seller.setFullName("Demo Seller");
+        seller.setRole(Role.SELLER);
+        userRepo.save(seller);
+        System.out.println("Seeded seller user: seller@test.com / seller1234");
+    }
+
     private void seedCatalog() {
         if (!productService.getAll(null).isEmpty())
             return;
@@ -61,15 +74,15 @@ public class DataSeeder implements CommandLineRunner {
 
         productService.create(new ProductRequest("Fresh Tomatoes", "Locally grown vine tomatoes",
                 new BigDecimal("2.50"), vegetables.getId(), 200, "kg",
-                Map.of("organic", true, "origin", "local farm")));
+                Map.of("organic", true, "origin", "local farm")), null, true);
 
         productService.create(new ProductRequest("Wireless Headphones", "Noise-cancelling over-ear headphones",
                 new BigDecimal("89.99"), electronics.getId(), 30, "piece",
-                Map.of("brand", "Sony", "warrantyMonths", 24, "color", "black")));
+                Map.of("brand", "Sony", "warrantyMonths", 24, "color", "black")), null, true);
 
         productService.create(new ProductRequest("Whole Milk", "Fresh pasteurized whole milk",
                 new BigDecimal("1.80"), supermarket.getId(), 150, "liter",
-                Map.of("fatContent", "3.5%", "brand", "LocalDairy")));
+                Map.of("fatContent", "3.5%", "brand", "LocalDairy")), null, true);
 
         System.out.println("Seeded 3 categories and 3 products (indexed via events).");
     }

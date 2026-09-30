@@ -37,9 +37,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                         .requestMatchers("/api/search/**", "/api/assistant/**").permitAll()
-                        .requestMatchers("/images/**").permitAll() // product photos must be publicly viewable, same as
-                                                                   // browsing
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/api/products/pending", "/api/products/*/approve", "/api/products/*/reject")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("ADMIN", "SELLER")
                         .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/seller-applications/**").hasRole("ADMIN")
+                        .requestMatchers("/api/products/pending", "/api/products/*/approve", "/api/products/*/reject")
+                        .hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -17,7 +17,9 @@ public record ProductResponse(
         String unit,
         Map<String, Object> attributes,
         List<ProductImageResponse> images,
-        String thumbnailUrl) {
+        String thumbnailUrl,
+        Long sellerId,
+        String status) {
     public static ProductResponse from(Product p) {
         List<ProductImageResponse> images = p.getImages().stream().map(ProductImageResponse::from).toList();
 
@@ -30,7 +32,10 @@ public record ProductResponse(
                 p.getUnit(),
                 p.getAttributes(),
                 images,
-                images.isEmpty() ? null : images.get(0).thumbnailUrl() // convenience for card views
+                images.isEmpty() ? null : images.get(0).thumbnailUrl(), // convenience for card views
+                p.getSellerId(), 
+                p.getStatus().name()
+
         );
     }
 }
