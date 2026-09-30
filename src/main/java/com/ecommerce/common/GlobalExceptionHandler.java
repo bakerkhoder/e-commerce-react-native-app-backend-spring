@@ -16,8 +16,9 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
-    // Business-rule failures used across the app: insufficient stock, email taken, bad credentials...
-    @ExceptionHandler({IllegalStateException.class, IllegalArgumentException.class})
+    // Business-rule failures used across the app: insufficient stock, email taken,
+    // bad credentials...
+    @ExceptionHandler({ IllegalStateException.class, IllegalArgumentException.class })
     public ResponseEntity<Map<String, String>> badRequest(RuntimeException e) {
         return body(HttpStatus.BAD_REQUEST, e.getMessage());
     }
@@ -25,11 +26,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> invalid(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
-            .findFirst().map(f -> f.getDefaultMessage()).orElse("Invalid request");
+                .findFirst().map(f -> f.getDefaultMessage()).orElse("Invalid request");
         return body(HttpStatus.BAD_REQUEST, message);
     }
 
     private ResponseEntity<Map<String, String>> body(HttpStatus status, String message) {
         return ResponseEntity.status(status).body(Map.of("message", Objects.toString(message, "Request failed")));
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> tooLarge(
+            org.springframework.web.multipart.MaxUploadSizeExceededException e) {
+        return body(HttpStatus.PAYLOAD_TOO_LARGE, "File is too large (max 8MB)");
     }
 }
