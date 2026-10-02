@@ -84,4 +84,13 @@ public class UserService {
             userRepository.save(user);
         }
     }
+
+    @Transactional
+    public void updateDefaultAddress(Long userId, String phone, String city, String addressLine) {
+        User user = getById(userId);
+        user.setDefaultPhone(phone);
+        user.setDefaultCity(city);
+        user.setDefaultAddressLine(addressLine);
+        userRepository.save(user);
+    }
 }

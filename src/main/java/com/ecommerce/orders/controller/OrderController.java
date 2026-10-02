@@ -1,7 +1,12 @@
 package com.ecommerce.orders.controller;
 
+import com.ecommerce.orders.dto.CheckoutRequest;
 import com.ecommerce.orders.dto.OrderResponse;
+import com.ecommerce.orders.dto.UpdateOrderStatusRequest;
 import com.ecommerce.orders.service.OrderService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -17,8 +22,18 @@ public class OrderController {
     }
 
     @PostMapping("/checkout")
-    public OrderResponse checkout(@AuthenticationPrincipal Long userId) {
-        return OrderResponse.from(orderService.checkout(userId));
+    public OrderResponse checkout(@AuthenticationPrincipal Long userId, @Valid @RequestBody CheckoutRequest request) {
+        return OrderResponse.from(orderService.checkout(userId, request));
+    }
+
+    @GetMapping("/all")
+    public List<OrderResponse> allOrders() {
+        return orderService.getAllOrders().stream().map(OrderResponse::from).toList();
+    }
+
+    @PutMapping("/{id}/status")
+    public OrderResponse updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request) {
+        return OrderResponse.from(orderService.updateStatus(id, request.status()));
     }
 
     @GetMapping

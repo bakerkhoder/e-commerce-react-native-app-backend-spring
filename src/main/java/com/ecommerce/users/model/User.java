@@ -22,7 +22,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.CUSTOMER;
+    private String defaultPhone;
+    private String defaultCity;
+    private String defaultAddressLine;
 
+    // + getters/setters
     public User() {
     }
 
@@ -64,5 +68,29 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getDefaultPhone() {
+        return defaultPhone;
+    }
+
+    public void setDefaultPhone(String defaultPhone) {
+        this.defaultPhone = defaultPhone;
+    }
+
+    public String getDefaultCity() {
+        return defaultCity;
+    }
+
+    public void setDefaultCity(String defaultCity) {
+        this.defaultCity = defaultCity;
+    }
+
+    public String getDefaultAddressLine() {
+        return defaultAddressLine;
+    }
+
+    public void setDefaultAddressLine(String defaultAddressLine) {
+        this.defaultAddressLine = defaultAddressLine;
     }
 }
