@@ -1,5 +1,6 @@
 package com.ecommerce.orders.controller;
 
+import com.ecommerce.orders.dto.GuestCheckoutRequest;
 import com.ecommerce.orders.dto.CheckoutRequest;
 import com.ecommerce.orders.dto.OrderResponse;
 import com.ecommerce.orders.dto.UpdateOrderStatusRequest;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/orders")
@@ -44,5 +46,9 @@ public class OrderController {
     @GetMapping("/{id}")
     public OrderResponse getOrder(@AuthenticationPrincipal Long userId, @PathVariable Long id) {
         return OrderResponse.from(orderService.getOrderForUser(userId, id));
+    }
+    @PostMapping("/guest-checkout")
+    public OrderResponse guestCheckout(@Valid @RequestBody GuestCheckoutRequest request) {
+     return OrderResponse.from(orderService.guestCheckout(request));
     }
 }

@@ -27,10 +27,12 @@ public class AuthService {
 
         User user = new User();
         user.setEmail(req.email());
-        user.setPasswordHash(passwordEncoder.encode(req.password())); // hashed, never stored raw
+        user.setPasswordHash(passwordEncoder.encode(req.password()));
         user.setFullName(req.fullName());
+        if (req.phone() != null && !req.phone().isBlank()) user.setDefaultPhone(req.phone());
+        if (req.city() != null && !req.city().isBlank()) user.setDefaultCity(req.city());
+        if (req.addressLine() != null && !req.addressLine().isBlank()) user.setDefaultAddressLine(req.addressLine());
         User saved = userRepository.save(user);
-
         String token = jwtService.generateToken(saved.getId(), saved.getEmail(), saved.getRole());
         return new AuthResponse(token, saved.getId(), saved.getEmail(), saved.getFullName(),saved.getRole());
     }

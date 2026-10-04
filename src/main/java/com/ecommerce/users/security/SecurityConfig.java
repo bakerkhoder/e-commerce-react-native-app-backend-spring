@@ -26,6 +26,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(); // industry-standard one-way password hashing
     }
 
+    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -36,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/orders/guest-checkout").permitAll()
                         .requestMatchers("/api/search/**", "/api/assistant/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/api/products/pending", "/api/products/*/approve", "/api/products/*/reject")

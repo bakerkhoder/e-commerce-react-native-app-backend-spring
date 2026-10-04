@@ -1,6 +1,7 @@
 package com.ecommerce.cart.controller;
 
 import com.ecommerce.cart.dto.CartResponse;
+import com.ecommerce.cart.dto.SetQuantityRequest;
 import com.ecommerce.cart.service.CartService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,5 +31,11 @@ public class CartController {
     @DeleteMapping("/items/{productId}")
     public CartResponse removeItem(@AuthenticationPrincipal Long userId, @PathVariable Long productId) {
         return CartResponse.from(cartService.removeItem(userId, productId));
+    }
+
+    @PutMapping("/items/{productId}")
+    public CartResponse setQuantity(@AuthenticationPrincipal Long userId, @PathVariable Long productId,
+                                @RequestBody SetQuantityRequest request) {
+     return CartResponse.from(cartService.setItemQuantity(userId, productId, request.quantity()));
     }
 }

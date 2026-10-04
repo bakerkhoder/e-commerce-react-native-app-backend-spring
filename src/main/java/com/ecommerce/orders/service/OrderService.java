@@ -3,8 +3,11 @@ package com.ecommerce.orders.service;
 import com.ecommerce.cart.model.Cart;
 import com.ecommerce.cart.model.CartItem;
 import com.ecommerce.cart.service.CartService;
+import com.ecommerce.catalog.model.Product;
 import com.ecommerce.catalog.service.ProductService;
 import com.ecommerce.orders.dto.CheckoutRequest;
+import com.ecommerce.orders.dto.GuestCheckoutItem;
+import com.ecommerce.orders.dto.GuestCheckoutRequest;
 import com.ecommerce.orders.model.Order;
 import com.ecommerce.orders.model.OrderItem;
 import com.ecommerce.orders.model.OrderStatus;
@@ -111,5 +114,47 @@ public class OrderService {
         // missing one
         return orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+    }
+
+    @Transactional
+    public Order guestCheckout(GuestCheckoutRequest req) {
+        ShippingAddress address = new ShippingAddress();
+        address.setFullName(req.fullName());
+        address.setPhone(req.phone());
+        address.setCity(req.city());
+        address.setAddressLine(req.addressLine());
+        address.setNotes(req.notes());
+
+        Order order = new Order(null); // no account — guest order
+        order.setGuestEmail(req.email());
+        order.setShippingAddress(address);
+        order.setShippingMethod(req.shippingMethod());
+        order.setShippingCost(req.shippingMethod().getCost());
+        order.setPaymentMethod(req.paymentMethod());
+
+        BigDecimal itemsTotal = BigDecimal.ZERO;
+        for (GuestCheckoutItem reqItem : req.items()) {
+            Product product = productService.getById(reqItem.productId()); // throws NotFoundException if invalid
+            if (!productService.hasStock(product.getId(), reqItem.quantity())) {
+                throw new IllegalStateException("Insufficient stock for " + product.getName());
+            }
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProductId(product.getId());
+            orderItem.setProductName(product.getName());
+            orderItem.setUnitPrice(product.getPrice()); // server price — a guest can never submit their own price
+            orderItem.setQuantity(reqItem.quantity());
+            order.getItems().add(orderItem);
+            itemsTotal = itemsTotal.add(product.getPrice().multiply(BigDecimal.valueOf(reqItem.quantity())));
+            productService.reduceStock(product.getId(), reqItem.quantity());
+        }
+
+        order.setTotalAmount(itemsTotal.add(order.getShippingCost()));
+        Order saved = orderRepository.save(order);
+
+        notificationService.notifyNewOrder(saved);
+        notificationService.notifyCustomer(saved, req.email());
+
+        return saved;
     }
 }

@@ -11,15 +11,14 @@ import java.util.List;
 public record OrderResponse(
     Long id, Long userId, List<OrderItemResponse> items, BigDecimal totalAmount,
     OrderStatus status, Instant createdAt, ShippingAddressResponse shippingAddress,
-    ShippingMethod shippingMethod, BigDecimal shippingCost, PaymentMethod paymentMethod
+    ShippingMethod shippingMethod, BigDecimal shippingCost, PaymentMethod paymentMethod, String guestEmail
 ) {
     public static OrderResponse from(Order o) {
         return new OrderResponse(
-            o.getId(), o.getUserId(),
-            o.getItems().stream().map(OrderItemResponse::from).toList(),
+            o.getId(), o.getUserId(), o.getItems().stream().map(OrderItemResponse::from).toList(),
             o.getTotalAmount(), o.getStatus(), o.getCreatedAt(),
             ShippingAddressResponse.from(o.getShippingAddress()),
-            o.getShippingMethod(), o.getShippingCost(), o.getPaymentMethod()
+            o.getShippingMethod(), o.getShippingCost(), o.getPaymentMethod(), o.getGuestEmail()
         );
     }
 }

@@ -5,7 +5,10 @@ import com.ecommerce.cart.model.CartItem;
 import com.ecommerce.cart.repository.CartRepository;
 import com.ecommerce.catalog.model.Product;
 import com.ecommerce.catalog.service.ProductService;
+import com.ecommerce.common.NotFoundException;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CartService {
@@ -62,4 +65,23 @@ public class CartService {
         cart.getItems().clear();
         cartRepository.save(cart);
     }
+
+    @Transactional
+    public Cart setItemQuantity(Long userId, Long productId, int quantity) {
+     if (quantity <= 0) {
+         return removeItem(userId, productId);
+        }
+     if (!productService.hasStock(productId, quantity)) {
+         throw new IllegalStateException("Insufficient stock for that quantity");
+       }
+     Cart cart = getOrCreateCart(userId);
+     CartItem item = cart.getItems().stream()
+        .filter(i -> i.getProductId().equals(productId))
+        .findFirst()
+        .orElseThrow(() -> new NotFoundException("Item not in cart"));
+     item.setQuantity(quantity);
+     return cartRepository.save(cart);
+    }
+
+
 }

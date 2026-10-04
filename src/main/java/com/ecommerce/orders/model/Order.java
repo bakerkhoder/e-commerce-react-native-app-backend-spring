@@ -14,9 +14,6 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
-
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
@@ -41,6 +38,9 @@ public class Order {
     private PaymentMethod paymentMethod;
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
+    private Long userId; // remove @Column(nullable = false) — null means a guest order
+
+    private String guestEmail; // only set for guest orders
 
     public Order() {
     }
@@ -96,7 +96,7 @@ public class Order {
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
-    
+
     public void setShippingAddress(ShippingAddress shippingAddress) {
         this.shippingAddress = shippingAddress;
     }
@@ -127,5 +127,13 @@ public class Order {
 
     public void setPaymentMethod(PaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public String getGuestEmail() {
+        return guestEmail;
+    }
+
+    public void setGuestEmail(String guestEmail) {
+        this.guestEmail = guestEmail;
     }
 }
