@@ -39,4 +39,12 @@ public class GlobalExceptionHandler {
             org.springframework.web.multipart.MaxUploadSizeExceededException e) {
         return body(HttpStatus.PAYLOAD_TOO_LARGE, "File is too large (max 8MB)");
     }
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> unexpected(Exception e) {
+        log.error("Unexpected error", e); // full detail stays server-side, in your logs
+        return body(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong. Please try again.");
+    }
 }

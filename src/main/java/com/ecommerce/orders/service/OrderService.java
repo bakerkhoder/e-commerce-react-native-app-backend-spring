@@ -8,11 +8,14 @@ import com.ecommerce.catalog.service.ProductService;
 import com.ecommerce.orders.dto.CheckoutRequest;
 import com.ecommerce.orders.dto.GuestCheckoutItem;
 import com.ecommerce.orders.dto.GuestCheckoutRequest;
+import com.ecommerce.orders.event.OrderPlacedEvent;
 import com.ecommerce.orders.model.Order;
 import com.ecommerce.orders.model.OrderItem;
 import com.ecommerce.orders.model.OrderStatus;
 import com.ecommerce.orders.model.ShippingAddress;
 import com.ecommerce.orders.repository.OrderRepository;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -25,16 +28,16 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartService cartService;
     private final ProductService productService;
-    private final OrderNotificationService notificationService;
     private final com.ecommerce.users.service.UserService userService;
-
+    private final ApplicationEventPublisher events;
+    
     public OrderService(OrderRepository orderRepository, CartService cartService, ProductService productService,
-            OrderNotificationService notificationService, com.ecommerce.users.service.UserService userService) {
+           ApplicationEventPublisher events, com.ecommerce.users.service.UserService userService ) {
         this.orderRepository = orderRepository;
         this.cartService = cartService;
         this.productService = productService;
-        this.notificationService = notificationService;
         this.userService = userService;
+        this.events=events;
     }
 
     @Transactional
@@ -84,9 +87,12 @@ public class OrderService {
             userService.updateDefaultAddress(userId, req.phone(), req.city(), req.addressLine());
         }
 
-        notificationService.notifyNewOrder(saved); // best-effort, never blocks the order itself
+        // notificationService.notifyNewOrder(saved); // best-effort, never blocks the
+        // order itself
         com.ecommerce.users.model.User customer = userService.getById(userId);
-        notificationService.notifyCustomer(saved, customer.getEmail());
+        events.publishEvent(new OrderPlacedEvent(saved, customer.getEmail()));
+       // com.ecommerce.users.model.User customer = userService.getById(userId);
+        //notificationService.notifyCustomer(saved, customer.getEmail());
         return saved;
     }
 
@@ -152,8 +158,7 @@ public class OrderService {
         order.setTotalAmount(itemsTotal.add(order.getShippingCost()));
         Order saved = orderRepository.save(order);
 
-        notificationService.notifyNewOrder(saved);
-        notificationService.notifyCustomer(saved, req.email());
+        events.publishEvent(new OrderPlacedEvent(saved, req.email()));
 
         return saved;
     }
