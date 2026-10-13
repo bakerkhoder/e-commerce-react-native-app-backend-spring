@@ -27,6 +27,13 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
+    /**
+     * Snapshots taken when the order is placed, so a later cost or ownership change
+     * cannot rewrite the history of an order that already happened.
+     */
+    private Long sellerId;
+    private BigDecimal unitCost;
+
     public String toLine() {
         return "- " + productName + " x" + quantity + " @ $" + unitPrice;
     }
@@ -80,6 +87,22 @@ public class OrderItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public Long getSellerId() {
+        return sellerId;
+    }
+
+    public void setSellerId(Long sellerId) {
+        this.sellerId = sellerId;
+    }
+
+    public BigDecimal getUnitCost() {
+        return unitCost;
+    }
+
+    public void setUnitCost(BigDecimal unitCost) {
+        this.unitCost = unitCost;
     }
  
 }

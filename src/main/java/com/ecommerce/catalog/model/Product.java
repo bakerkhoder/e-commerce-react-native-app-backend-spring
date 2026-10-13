@@ -40,6 +40,12 @@ public class Product {
     private Map<String, Object> attributes;
     private Long sellerId; // null = platform-owned (today's model)
 
+    /**
+     * Weighted-average unit cost, maintained from recorded purchases.
+     * Deliberately absent from ProductResponse: that DTO is public and cost is not.
+     */
+    private BigDecimal costPrice;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProductStatus status = ProductStatus.APPROVED; // default keeps non-marketplace mode working unchanged
@@ -126,6 +132,14 @@ public class Product {
 
     public void setSellerId(Long sellerId) {
         this.sellerId = sellerId;
+    }
+
+    public BigDecimal getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(BigDecimal costPrice) {
+        this.costPrice = costPrice;
     }
 
     public ProductStatus getStatus() {

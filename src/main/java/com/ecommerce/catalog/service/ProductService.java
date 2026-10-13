@@ -15,6 +15,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,6 +96,37 @@ public class ProductService {
     public boolean hasStock(Long productId, int quantity) {
         Product product = getById(productId);
         return product.getStockQuantity() != null && product.getStockQuantity() >= quantity;
+    }
+
+    /** Analytics needs every product, including pending/rejected seller listings. */
+    @Transactional(readOnly = true)
+    public List<Product> getAllIncludingUnapproved() {
+        return repository.findAll();
+    }
+
+    public boolean exists(Long id) {
+        return repository.existsById(id);
+    }
+
+    /**
+     * Applies a recorded purchase. When the units join stock, the product's cost becomes
+     * the weighted average of what was already on hand and what was just bought, which is
+     * what keeps the dashboard's profit honest as supplier prices move.
+     */
+    @Transactional
+    public void applyPurchase(Long productId, int qty, BigDecimal unitCost, boolean addToStock) {
+        Product p = getById(productId);
+        if (addToStock) {
+            int oldStock = p.getStockQuantity() == null ? 0 : Math.max(p.getStockQuantity(), 0);
+            BigDecimal oldCost = p.getCostPrice() == null ? unitCost : p.getCostPrice();
+            BigDecimal total = oldCost.multiply(BigDecimal.valueOf(oldStock))
+                    .add(unitCost.multiply(BigDecimal.valueOf(qty)));
+            p.setCostPrice(total.divide(BigDecimal.valueOf(oldStock + qty), 4, RoundingMode.HALF_UP));
+            p.setStockQuantity(oldStock + qty);
+        } else {
+            p.setCostPrice(unitCost);
+        }
+        repository.save(p);
     }
 
     @Transactional

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import com.ecommerce.common.NotFoundException;
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -68,12 +70,16 @@ public class OrderService {
 
         BigDecimal itemsTotal = BigDecimal.ZERO;
         for (CartItem cartItem : cart.getItems()) {
+            Product product = productService.getById(cartItem.getProductId());
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProductId(cartItem.getProductId());
             orderItem.setProductName(cartItem.getProductName());
             orderItem.setUnitPrice(cartItem.getUnitPrice());
             orderItem.setQuantity(cartItem.getQuantity());
+            // snapshot for the dashboard: who sold it and what it cost us at this moment
+            orderItem.setSellerId(product.getSellerId());
+            orderItem.setUnitCost(product.getCostPrice());
             order.getItems().add(orderItem);
             itemsTotal = itemsTotal.add(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
             productService.reduceStock(cartItem.getProductId(), cartItem.getQuantity());
@@ -107,6 +113,11 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         order.setStatus(status);
         return orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> getOrdersSince(Instant from, Collection<OrderStatus> statuses) {
+        return orderRepository.findByCreatedAtGreaterThanEqualAndStatusIn(from, statuses);
     }
 
     @Transactional(readOnly = true)
@@ -150,6 +161,8 @@ public class OrderService {
             orderItem.setProductName(product.getName());
             orderItem.setUnitPrice(product.getPrice()); // server price — a guest can never submit their own price
             orderItem.setQuantity(reqItem.quantity());
+            orderItem.setSellerId(product.getSellerId());
+            orderItem.setUnitCost(product.getCostPrice());
             order.getItems().add(orderItem);
             itemsTotal = itemsTotal.add(product.getPrice().multiply(BigDecimal.valueOf(reqItem.quantity())));
             productService.reduceStock(product.getId(), reqItem.quantity());

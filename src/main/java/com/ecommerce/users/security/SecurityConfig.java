@@ -63,9 +63,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest-checkout").permitAll()
                         .requestMatchers("/api/search/**", "/api/assistant/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
+                        // first match wins, so the public view ping must come before the
+                        // broader dashboard rules below
+                        .requestMatchers(HttpMethod.POST, "/api/analytics/views/*").permitAll()
                         .requestMatchers("/api/products/pending", "/api/products/*/approve", "/api/products/*/reject")
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("ADMIN", "SELLER")
+                        .requestMatchers("/api/dashboard/**", "/api/ledger/**").hasAnyRole("ADMIN", "SELLER")
                         .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/seller-applications/**").hasRole("ADMIN")
                         .requestMatchers("/api/products/pending", "/api/products/*/approve", "/api/products/*/reject")

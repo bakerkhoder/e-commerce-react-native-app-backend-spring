@@ -30,7 +30,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
             new Rule("/api/auth/", "POST", 10, 60_000),
             new Rule("/api/orders/guest-checkout", "POST", 5, 3_600_000),
             new Rule("/api/assistant/", "GET", 30, 60_000),
-            new Rule("/api/search", "GET", 60, 60_000));
+            new Rule("/api/search", "GET", 60, 60_000),
+            // the view ping is public, so it needs its own ceiling
+            new Rule("/api/analytics/views/", "POST", 120, 60_000),
+            // each AI plan costs a model call
+            new Rule("/api/dashboard/ai-plan", "POST", 5, 60_000));
 
     private static final class Window {
         long start;
