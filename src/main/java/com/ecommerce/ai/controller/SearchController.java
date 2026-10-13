@@ -17,6 +17,11 @@ public class SearchController {
 
     @GetMapping
     public List<ProductResponse> search(@RequestParam String q, @RequestParam(required = false) Long categoryId) {
+        // Each query triggers a model embedding call, so an unbounded one is a cheap
+        // way to hurt the server.
+        if (q.length() > 200) {
+            q = q.substring(0, 200);
+        }
         return searchService.searchProducts(q, 10, categoryId).stream().map(ProductResponse::from).toList();
     }
 }

@@ -15,6 +15,10 @@ public class AssistantController {
 
     @GetMapping("/ask")
     public String ask(@RequestParam String question) {
+        // The assistant calls a model, so bound the input length
+        if (question.length() > 200) {
+            question = question.substring(0, 200);
+        }
         return assistantService.ask(question);
     }
 }

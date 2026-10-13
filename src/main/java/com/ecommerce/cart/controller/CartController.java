@@ -35,7 +35,7 @@ public class CartController {
 
     @PutMapping("/items/{productId}")
     public CartResponse setQuantity(@AuthenticationPrincipal Long userId, @PathVariable Long productId,
-                                @RequestBody SetQuantityRequest request) {
+                                @jakarta.validation.Valid @RequestBody SetQuantityRequest request) {
      return CartResponse.from(cartService.setItemQuantity(userId, productId, request.quantity()));
     }
 }

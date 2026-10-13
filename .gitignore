@@ -35,3 +35,9 @@ build/
 
 # Uploads / user content
 uploads/
+
+# Secrets: real values come from the environment, but never let a stray local file
+# (or a signing keystore) get committed
+.env
+.env.*
+*.keystore

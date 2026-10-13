@@ -14,6 +14,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,12 +41,40 @@ class CartServiceTest {
     }
 
     @Test
-    void addItem_throwsIllegalState_whenRequestedQuantityExceedsStock() {
-        when(productService.hasStock(1L, 100)).thenReturn(false);
+    void addItem_throwsIllegalState_whenQuantityIsValidButStockIsShort() {
+        when(productService.hasStock(1L, 99)).thenReturn(false);
 
-        assertThatThrownBy(() -> cartService.addItem(1L, 1L, 100))
+        assertThatThrownBy(() -> cartService.addItem(1L, 1L, 99))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Insufficient stock");
+    }
+
+    @Test
+    void addItem_rejectsNegativeQuantity_beforeTouchingStockOrDatabase() {
+        assertThatThrownBy(() -> cartService.addItem(1L, 1L, -5))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Quantity must be between 1 and 99");
+
+        // The old bug: -5 passed the stock check and produced a negative order total
+        verifyNoInteractions(productService);
+        verifyNoInteractions(cartRepository);
+    }
+
+    @Test
+    void addItem_rejectsQuantityAboveTheCap() {
+        assertThatThrownBy(() -> cartService.addItem(1L, 1L, 100))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Quantity must be between 1 and 99");
+
+        verifyNoInteractions(productService);
+        verifyNoInteractions(cartRepository);
+    }
+
+    @Test
+    void setItemQuantity_rejectsQuantityAboveTheCap() {
+        assertThatThrownBy(() -> cartService.setItemQuantity(1L, 1L, 100))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Quantity must be between 1 and 99");
     }
 
     @Test
@@ -52,7 +82,7 @@ class CartServiceTest {
         Cart cart = new Cart(1L);
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
         when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(productService.hasStock(1L, 1)).thenReturn(true);
+        when(productService.hasStock(eq(1L), anyInt())).thenReturn(true);
         when(productService.getById(1L)).thenReturn(product(1L, "Tomatoes", "2.50", 100));
 
         cartService.addItem(1L, 1L, 1);

@@ -27,6 +27,9 @@ public class CartService {
     }
 
     public Cart addItem(Long userId, Long productId, int quantity) {
+        if (quantity < 1 || quantity > 99) {
+            throw new IllegalArgumentException("Quantity must be between 1 and 99");
+        }
         if (!productService.hasStock(productId, quantity)) {
             throw new IllegalStateException("Insufficient stock for product " + productId);
         }
@@ -70,6 +73,9 @@ public class CartService {
     public Cart setItemQuantity(Long userId, Long productId, int quantity) {
      if (quantity <= 0) {
          return removeItem(userId, productId);
+        }
+     if (quantity > 99) {
+         throw new IllegalArgumentException("Quantity must be between 1 and 99");
         }
      if (!productService.hasStock(productId, quantity)) {
          throw new IllegalStateException("Insufficient stock for that quantity");

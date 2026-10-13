@@ -3,6 +3,7 @@ package com.ecommerce.catalog.controller;
 import com.ecommerce.catalog.dto.CategoryResponse;
 import com.ecommerce.catalog.model.Category;
 import com.ecommerce.catalog.service.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public CategoryResponse create(@RequestBody Category category) {
+    public CategoryResponse create(@Valid @RequestBody Category category) {
         return CategoryResponse.from(service.create(category));
     }
 }

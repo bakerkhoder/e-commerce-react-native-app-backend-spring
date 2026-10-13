@@ -195,6 +195,9 @@ public class ProductService {
     @Transactional
     public Product addImage(Long productId, org.springframework.web.multipart.MultipartFile file) {
         Product product = getById(productId);
+        if (product.getImages().size() >= 10) {
+            throw new IllegalStateException("A product can have at most 10 photos");
+        }
         ProductImageService.ImagePaths paths = imageService.store(productId, file);
 
         ProductImage image = new ProductImage();

@@ -1,6 +1,8 @@
 package com.ecommerce.catalog.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "categories")
@@ -10,9 +12,12 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Size(max = 30)
     private String vertical; // "grocery", "general", "electronics" — for grouping/filtering
 
     public Category() {}

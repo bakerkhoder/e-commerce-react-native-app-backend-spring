@@ -7,13 +7,13 @@ import jakarta.validation.constraints.*;
 import java.util.List;
 
 public record GuestCheckoutRequest(
-    @NotBlank @Email String email,
-    @NotBlank String fullName,
-    @NotBlank String phone,
-    @NotBlank String city,
-    @NotBlank String addressLine,
-    String notes,
+    @NotBlank @Email @Size(max = 254) String email,
+    @NotBlank @Size(max = 100) String fullName,
+    @NotBlank @Size(max = 30) String phone,
+    @NotBlank @Size(max = 100) String city,
+    @NotBlank @Size(max = 255) String addressLine,
+    @Size(max = 500) String notes,
     @NotNull ShippingMethod shippingMethod,
     @NotNull PaymentMethod paymentMethod,
-    @NotEmpty List<@Valid GuestCheckoutItem> items
+    @NotEmpty @Size(max = 50) List<@Valid GuestCheckoutItem> items
 ) {}

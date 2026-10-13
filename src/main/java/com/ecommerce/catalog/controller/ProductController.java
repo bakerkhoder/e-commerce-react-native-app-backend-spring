@@ -6,6 +6,7 @@ import com.ecommerce.catalog.service.ProductService;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -29,7 +30,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ProductResponse update(@PathVariable Long id, @RequestBody ProductRequest request,
+    public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductRequest request,
             @AuthenticationPrincipal Long userId,
             org.springframework.security.core.Authentication auth) {
         boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -45,7 +46,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ProductResponse create(@RequestBody ProductRequest request,
+    public ProductResponse create(@Valid @RequestBody ProductRequest request,
             @AuthenticationPrincipal Long userId,
             org.springframework.security.core.Authentication auth) {
         boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));

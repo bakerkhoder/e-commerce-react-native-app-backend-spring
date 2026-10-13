@@ -11,12 +11,18 @@ import com.ecommerce.users.model.Role;
 import com.ecommerce.users.model.User;
 import com.ecommerce.users.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.Map;
 
+/**
+ * Demo data for local development only. Gated behind the dev profile so a production
+ * deploy can never create admin@test.com / admin1234.
+ */
 @Component
+@Profile("dev")
 public class DataSeeder implements CommandLineRunner {
 
     private final CategoryRepository categoryRepo;
