@@ -7,14 +7,16 @@ public record CartItemResponse(
     Long productId,
     String productName,
     BigDecimal unitPrice,
-    Integer quantity
+    Integer quantity,
+    String thumbnailUrl
 ) {
     public static CartItemResponse from(CartItem item) {
         return new CartItemResponse(
             item.getProductId(),
             item.getProductName(),
             item.getUnitPrice(),
-            item.getQuantity()
+            item.getQuantity(),
+            item.getThumbnailUrl()
         );
     }
 }

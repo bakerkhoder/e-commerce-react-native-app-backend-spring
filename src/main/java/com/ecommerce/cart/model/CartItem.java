@@ -34,6 +34,9 @@ public class CartItem {
     @Column(nullable = false)
     private Integer quantity;
 
+    /** Snapshot of the product's first thumbnail, so the cart can show a picture. */
+    private String thumbnailUrl;
+
     public CartItem() {
     }
 
@@ -83,5 +86,13 @@ public class CartItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 }

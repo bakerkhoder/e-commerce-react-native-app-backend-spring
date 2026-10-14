@@ -50,6 +50,8 @@ public class CartService {
                             newItem.setProductName(product.getName());
                             newItem.setUnitPrice(product.getPrice());
                             newItem.setQuantity(quantity);
+                            newItem.setThumbnailUrl(product.getImages().isEmpty() ? null
+                                    : product.getImages().get(0).getThumbnailUrl());
                             cart.getItems().add(newItem);
                         });
 
